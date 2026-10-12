@@ -1,0 +1,22 @@
+# Extra Gitleaks rules for this repo. CI loads this file through
+# GITLEAKS_CONFIG in .github/workflows/ci.yml.
+title = "github-workspace-mcp-server"
+minVersion = "8.21.0"
+
+[extend]
+useDefault = true
+
+# Keep the author's handle out of the exported workflow so importers do not
+# default to the author's account. Case insensitive, so variants like
+# RyanJayLeyva are caught.
+[[rules]]
+id = "personal-identifier"
+description = "Author's handle from the original export"
+regex = '''(?i)ryanjayleyva'''
+tags = ["personal"]
+
+# Structural checks on the exported workflow live in scripts/secret_guard.py.
+# This file skips itself because it spells out the pattern it forbids.
+[[allowlists]]
+description = "The gitleaks config itself"
+paths = ['''(^|/)\.gitleaks\.toml$''']
