@@ -1,0 +1,416 @@
+{
+  "name": "github-workspace-mcp-server",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "bearerAuth",
+        "path": "github-workspace-mcp-server",
+        "instructions": "GitHub helpers for a solo developer (default owner: <GITHUB_USERNAME>). Use list_repos to list the repositories of an owner. Every other tool needs the repository owner and name. Use list_issues to list issues (open and closed by default, optional state filter), get_issue to read one issue by number, list_prs to list pull requests (open and closed by default, optional state filter), and get_pr to read one pull request by number. Use get_file to read any file by full path, for example README.md or package.json, with an optional branch or ref. Use list_directory to browse a folder, get_pr_diff for a pull request diff, list_issue_comments for the comments on an issue or pull request, list_commits for recent commits (optional branch or path), list_releases for releases, and search_code to search code in a repository. File content is returned base64-encoded in the content field, so decode it before reading."
+      },
+      "id": "7341d8ea-e028-4a65-b3aa-8cb5f219ecfc",
+      "name": "github-workspace-mcp-server",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [832, 112]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "repository",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "limit": 30,
+        "getRepositoryIssuesFilters": {
+          "labels": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('labels', 'Optional comma-separated labels to filter by. Leave empty for all issues.', 'string', '') }}",
+          "state": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('state', 'Issue state: open, closed or all. Use all unless the user asks for only open or only closed issues. Note: GitHub may include pull requests in issue lists.', 'string', 'all') }}",
+          "sort": "updated",
+          "direction": "desc"
+        }
+      },
+      "id": "fdd8b17c-89f6-49b5-8a5f-4b67178c3882",
+      "name": "list_issues",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [200, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "repository",
+        "operation": "getPullRequests",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "limit": 30,
+        "getRepositoryPullRequestsFilters": {
+          "state": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('state', 'Pull request state: open, closed or all. Use all unless the user asks for only open or only closed pull requests.', 'string', 'all') }}",
+          "sort": "updated",
+          "direction": "desc"
+        }
+      },
+      "id": "76f03cf7-9677-410d-8f06-808e67e91891",
+      "name": "list_prs",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [328, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "issueNumber": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('issueNumber', 'The issue number, for example 42', 'number') }}"
+      },
+      "id": "448ec3fb-4852-4d98-82d4-9b11e2b4f129",
+      "name": "get_issue",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [456, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "pullRequest",
+        "operation": "get",
+        "pullRequestNumber": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('pullRequestNumber', 'The pull request number, for example 42', 'number') }}",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        }
+      },
+      "id": "03214182-5cd5-4e53-97a6-c72132710cc2",
+      "name": "get_pr",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [584, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "user",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization whose repositories to list', 'string', '<GITHUB_USERNAME>') }}"
+        }
+      },
+      "id": "4897c2e2-38b1-4a8d-8f3d-fecc39ab4a45",
+      "name": "list_repos",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [712, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "filePath": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('filePath', 'Full file path inside the repository, for example package.json or docs/setup.md', 'string') }}",
+        "asBinaryProperty": false,
+        "additionalParameters": {
+          "reference": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('reference', 'Optional branch, tag or commit SHA. Leave empty for the default branch.', 'string', '') }}"
+        }
+      },
+      "id": "8e263893-0751-42d0-b8d0-1975daff25e6",
+      "name": "get_file",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [840, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "list",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "filePath": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('filePath', 'Directory path inside the repository. Use an empty string for the repository root, or for example src or docs.', 'string', '') }}"
+      },
+      "id": "271eece0-0f23-480e-9f38-dfdd6a99465b",
+      "name": "list_directory",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [968, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "pullRequest",
+        "operation": "getDiff",
+        "pullRequestNumber": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('pullRequestNumber', 'The pull request number, for example 42', 'number') }}",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        }
+      },
+      "id": "26d28039-7347-41cb-a73b-411dc490b530",
+      "name": "get_pr_diff",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [1096, 344]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}/{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}/issues/{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('number', 'Issue or pull request number', 'number') }}/comments?per_page=50",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubOAuth2Api",
+        "options": {}
+      },
+      "id": "5dd0a51b-ebfd-47d2-bad0-5c86023e5de6",
+      "name": "list_issue_comments",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [1224, 344]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}/{{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}/commits?per_page=20&sha={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('branch', 'Optional branch, tag or commit SHA to list commits from. Leave empty for the default branch.', 'string', '') }}&path={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('path', 'Optional file path to only list commits touching it. Leave empty for all.', 'string', '') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubOAuth2Api",
+        "options": {}
+      },
+      "id": "c6ea9f76-5520-4a5b-a57f-203896304687",
+      "name": "list_commits",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [1352, 344]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "release",
+        "operation": "getAll",
+        "owner": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('repository', 'Repository name, without the owner') }}"
+        },
+        "limit": 20
+      },
+      "id": "f03a0f3a-da53-41bc-99a6-3ad3739a7b09",
+      "name": "list_releases",
+      "type": "n8n-nodes-base.githubTool",
+      "typeVersion": 1.1,
+      "position": [1480, 344]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/search/code?per_page=20&q={{ encodeURIComponent(/*n8n-auto-generated-fromAI-override*/ $fromAI('query', 'Code search terms', 'string') + ' repo:' + $fromAI('owner', 'GitHub username or organization that owns the repository', 'string', '<GITHUB_USERNAME>') + '/' + $fromAI('repository', 'Repository name, without the owner')) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubOAuth2Api",
+        "options": {}
+      },
+      "id": "56463a80-517c-4945-8567-a10526f92e6b",
+      "name": "search_code",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [1608, 344]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "list_issues": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_prs": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_issue": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_pr": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_repos": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_file": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_directory": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_pr_diff": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_issue_comments": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_commits": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "list_releases": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_code": {
+      "ai_tool": [
+        [
+          {
+            "node": "github-workspace-mcp-server",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0021d559-cb8f-48a3-b802-11e629567cd3",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "id": "8TFLauV9OFKCVz2Z",
+  "tags": []
+}
