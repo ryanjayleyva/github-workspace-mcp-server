@@ -1,0 +1,35 @@
+name: github workspace mcp server workflow quality check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  checks:
+    name: validate and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dev tools
+        run: python3 -m pip install ruff==0.17.0 basedpyright==1.39.10
+      - name: Lint and type check
+        run: |
+          ruff check --select E,F,W --line-length 79 --target-version py39 .
+          ruff format --check --line-length 79 scripts/
+          python3 -m basedpyright
+      - name: Validate workflow JSON
+        run: python3 scripts/validate_workflow.py
+      - name: Guard against leaked n8n fields
+        run: python3 scripts/secret_guard.py
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_VERSION: 8.30.1
