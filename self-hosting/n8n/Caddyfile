@@ -1,0 +1,18 @@
+# Optional: uncomment to receive certificate expiry notices from
+# Let's Encrypt. A global options block must come before any site block.
+# {
+# 	email you@example.com
+# }
+
+# Caddy fetches a Let's Encrypt certificate for {$N8N_DOMAIN} automatically
+# and forwards everything to the n8n container over the Compose network.
+# {$N8N_DOMAIN} comes from the environment Compose passes in from .env.
+
+{$N8N_DOMAIN} {
+	# n8n webhooks and the MCP Server Trigger keep connections open.
+	# Disable response buffering so events stream through instead of
+	# stalling until the connection closes.
+	reverse_proxy n8n:5678 {
+		flush_interval -1
+	}
+}
