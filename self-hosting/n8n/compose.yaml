@@ -1,0 +1,63 @@
+# Self-hosted n8n behind Caddy with automatic HTTPS.
+#
+# Example deployment for a single n8n node with the built-in SQLite
+# database. Two containers: n8n and Caddy, which terminates TLS and
+# reverse-proxies to it.
+#
+# n8n is never published to the host; only Caddy binds ports 80 and 443.
+#
+# Copy .env.example to .env, fill it in, then: docker compose up -d
+name: n8n
+services:
+  n8n:
+    # Pin a version. Never use :latest in production, since a restart could
+    # jump you across a major version. Read the release notes before moving.
+    image: n8nio/n8n:2.42.7
+    container_name: n8n
+    restart: unless-stopped
+    # Reachable by Caddy over the internal network only. No host ports.
+    expose:
+      - "5678"
+    environment:
+      - TZ=${TZ:-Asia/Manila}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Asia/Manila}
+      # Encrypts every stored credential. Set once, back it up, never change it.
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?set N8N_ENCRYPTION_KEY in .env}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      # Public URL advertised to the editor, webhooks and OAuth redirects.
+      # n8n still listens on 5678 internally; these describe the way in.
+      - N8N_HOST=${N8N_DOMAIN:?set N8N_DOMAIN in .env}
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      - N8N_PROXY_HOPS=1
+      - N8N_EDITOR_BASE_URL=https://${N8N_DOMAIN}
+      - N8N_WEBHOOK_URL=https://${N8N_DOMAIN}/
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n
+  caddy:
+    image: caddy:2
+    container_name: n8n-caddy
+    restart: unless-stopped
+    depends_on:
+      - n8n
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - N8N_DOMAIN=${N8N_DOMAIN:?set N8N_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - n8n
+volumes:
+  n8n_data:
+  caddy_data:
+  caddy_config:
+networks:
+  n8n:
