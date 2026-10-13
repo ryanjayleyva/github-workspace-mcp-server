@@ -41,7 +41,8 @@ described in the tool reference below.
 
 - An n8n instance, cloud or self hosted, running a version that
   includes the MCP Server Trigger node. It ships in recent releases
-  of both.
+  of both. If you need an instance, see
+  [Self-hosting n8n with Docker](#self-hosting-n8n-with-docker).
 - A GitHub account.
 - A GitHub OAuth app, or a personal access token if you prefer
   token authentication.
@@ -261,7 +262,7 @@ decode it before use.
   transport holds connections open and will drop behind a load
   balanced pool.
 - Behind a reverse proxy, disable buffering for the MCP endpoint.
-  n8n's MCP Server Trigger documentation has an nginx example.
+  The self-hosting setup here does this in its Caddyfile.
 
 ## Troubleshooting
 
@@ -276,6 +277,90 @@ decode it before use.
 - The connection drops mid session. You are likely behind a
   buffering proxy or across multiple webhook replicas. See the n8n
   MCP Server Trigger documentation for the `/mcp` proxy settings.
+
+## Self-hosting n8n with Docker
+
+If you do not already run an n8n instance, the `self-hosting/n8n`
+directory is a ready to run Docker Compose setup. It starts n8n behind
+Caddy, which obtains a Let's Encrypt certificate and reverse proxies
+to n8n. n8n stays on the internal Docker network and is never
+published to the host, so Caddy on ports 80 and 443 is the only way
+in.
+
+This matters for the MCP endpoint too. The Caddyfile disables response
+buffering, because the MCP Server Trigger keeps a stream open and a
+buffering proxy makes it appear to hang.
+
+### Files
+
+- `compose.yaml`, the n8n and Caddy services, their volumes and
+  network.
+- `Caddyfile`, the reverse proxy and automatic TLS.
+- `.env.example`, the values you supply.
+
+### Quickstart
+
+Requirements first. Docker Engine with the Compose plugin, a hostname
+whose A or AAAA record already points at the server, and ports 80 and
+443 free and reachable. Caddy uses the HTTP challenge to issue the
+certificate, so DNS must resolve before the first start.
+
+Then, on the server.
+
+```sh
+cd self-hosting/n8n
+cp .env.example .env     # then set N8N_DOMAIN
+openssl rand -hex 32     # paste into N8N_ENCRYPTION_KEY in .env
+docker compose up -d
+docker compose logs -f n8n
+```
+
+Open `https://YOUR_DOMAIN` and create the owner account. n8n has no
+authentication until you do.
+
+### Why the URL settings look the way they do
+
+n8n listens on port 5678 inside the container, but Caddy serves HTTPS
+on 443, so n8n cannot work the public address out on its own. Without
+being told, it advertises webhook and OAuth redirect URLs pointing at
+`localhost` or the wrong scheme, and those are the URLs it hands to
+external services. That matters here, because the MCP Server Trigger
+publishes a URL that external clients call.
+
+- `N8N_HOST` and `N8N_PROTOCOL` name the public host and scheme.
+- `N8N_EDITOR_BASE_URL` fixes the editor URL.
+- `N8N_WEBHOOK_URL` fixes webhook URLs.
+- `N8N_PROXY_HOPS`, set to one, tells n8n it sits behind exactly one
+  proxy, so it trusts the forwarded client headers.
+
+`N8N_PORT` stays at the internal 5678.
+
+### Operating it
+
+Upgrade on purpose. Edit the pinned tag in `compose.yaml`, read the
+release notes for breaking changes, then pull and restart.
+
+```sh
+docker compose pull
+docker compose up -d
+```
+
+Back up the `n8n_data` volume and the `N8N_ENCRYPTION_KEY` in `.env`
+together. The volume holds the database, the key decrypts the
+credentials inside it, and either one alone will not restore a working
+instance.
+
+```sh
+docker compose down
+docker run --rm \
+  -v n8n_n8n_data:/data \
+  -v "$PWD":/backup \
+  alpine tar czf /backup/n8n-backup.tgz -C /data .
+docker compose up -d
+```
+
+SQLite suits a single instance like this one. Queue mode is not
+supported on SQLite and needs PostgreSQL and Redis instead.
 
 ## Development
 
@@ -300,6 +385,8 @@ python3 scripts/secret_guard.py
 
 - `workflow/github-workspace-mcp-server.json`, the workflow to
   import.
+- `self-hosting/n8n/`, a Docker Compose setup that runs n8n behind
+  Caddy with automatic HTTPS.
 - `.env.example`, a checklist of the credentials and defaults.
 - `scripts/`, the checks that CI runs.
 - `.github/workflows/ci.yml`, continuous integration.
